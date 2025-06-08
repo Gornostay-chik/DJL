@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
+
     public static void main(String[] args) throws Exception {
         // Включаем оффлайн-режим DJL
         System.setProperty("djl.offline", "true");
@@ -33,7 +34,7 @@ public class Main {
         // Создаем in-memory хранилище эмбеддингов
         InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
 
-        // Генерируем эмбеддинги для всех сегментов
+        // Генерируем эмбеддинги для всех сегментов и сохраняем их в хранилище
         List<Embedding> embeddings = new ArrayList<>();
         for (TextSegment segment : segments) {
             Embedding emb = embeddingModel.embed(segment.text());
@@ -52,15 +53,38 @@ public class Main {
                 .build();
 
         // Выполняем поиск по схожести
-        EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequest);
-        for (EmbeddingMatch<TextSegment> match : searchResult.matches()) {
-            TextSegment matchedSegment = match.embedded();
-            System.out.println("Relevance Score: " + match.score());
-            String snippet = matchedSegment.text().substring(0, Math.min(300, matchedSegment.text().length()));
-            System.out.println(snippet + "...\n");
+        EmbeddingSearchResult<TextSegment> matches = embeddingStore.search(searchRequest);
+
+        // Комбинируем найденные сегменты в единый контекст
+        StringBuilder contextBuilder = new StringBuilder();
+        for (EmbeddingMatch<TextSegment> match : matches.matches()) {
+            TextSegment segment = match.embedded();
+            contextBuilder.append(segment.text()).append("\n\n");
         }
 
-        // Закрываем модель
+        String context = contextBuilder.toString();
+
+        // Создаем подсказку (prompt) с учетом контекста и вопроса
+        String promptTemplate = "Answer the following question based on the provided context.\n\n"
+                + "Context:\n%s\n\n"
+                + "Question: %s";
+
+        String prompt = String.format(promptTemplate, context, query);
+
+        System.out.println("Сформированная подсказка:");
+        System.out.println(prompt);
+        System.out.println("\n---\n");
+
+        // Создаем объект диалоговой модели и генерируем ответ
+        String tfModelDir = "/home/acer/IdeaProjects/DJI/src/main/resources/GPT2";
+        LocalONNXDialogModel dialogModel = new LocalONNXDialogModel(tfModelDir);
+
+        String answer = dialogModel.chat(prompt);
+        System.out.println("Сгенерированный ответ:");
+        System.out.println(answer);
+
+        // Закрываем ресурсы моделей
+        dialogModel.close();
         embeddingModel.close();
     }
 }

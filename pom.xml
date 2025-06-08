@@ -32,6 +32,13 @@
                 <version>0.33.0</version>
             </dependency>
 
+            <!-- https://mvnrepository.com/artifact/ai.djl.tensorflow/tensorflow-engine -->
+            <dependency>
+                <groupId>ai.djl.tensorflow</groupId>
+                <artifactId>tensorflow-engine</artifactId>
+                <version>0.33.0</version>
+            </dependency>
+
             <!-- Интеграция с Hugging Face через DJL для трансформеров -->
             <dependency>
                 <groupId>ai.djl.huggingface</groupId>
