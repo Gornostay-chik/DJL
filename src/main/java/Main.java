@@ -21,48 +21,17 @@ public class Main {
         // Определяем путь к текстовому документу
         String filePath = "src/main/resources/the_adventure_of_the_blue_carbuncle.txt";
 
-        // Загружаем документ с использованием TextDocumentParser
-        Document document = FileSystemDocumentLoader.loadDocument(filePath, new TextDocumentParser());
-        DocumentByParagraphSplitter splitter = new DocumentByParagraphSplitter(200, 10);
-        List<TextSegment> segments = splitter.split(document);
+        // Process a document and enable EmbeddingModel
+        DocumentProcessor processor = new DocumentProcessor();
+        processor.processDocument(filePath);
 
-        // Используем LocalONNXEmbeddingModel вместо LocalEmbeddingModel
-        LocalONNXEmbeddingModel embeddingModel = new LocalONNXEmbeddingModel(
-                "/home/acer/IdeaProjects/DJI/src/main/resources/allmpnetbasev2"
-        );
+        // Define a query
+        String query = "What is the main mystery in the story?";
 
-        // Создаем in-memory хранилище эмбеддингов
-        InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
+        // Take 3 relevant segments for context
+        List<TextSegment> relevantSegments = processor.retrieveRelevantContext(query, 3);
 
-        // Генерируем эмбеддинги для всех сегментов и сохраняем их в хранилище
-        List<Embedding> embeddings = new ArrayList<>();
-        for (TextSegment segment : segments) {
-            Embedding emb = embeddingModel.embed(segment.text());
-            embeddings.add(emb);
-        }
-        embeddingStore.addAll(embeddings, segments);
-
-        // Пример запроса
-        String query = "Who is Holmes?";
-        Embedding queryEmbedding = embeddingModel.embed(query);
-
-        // Создаем запрос на поиск (топ-3 сегмента)
-        EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
-                .queryEmbedding(queryEmbedding)
-                .maxResults(3)
-                .build();
-
-        // Выполняем поиск по схожести
-        EmbeddingSearchResult<TextSegment> matches = embeddingStore.search(searchRequest);
-
-        // Комбинируем найденные сегменты в единый контекст
-        StringBuilder contextBuilder = new StringBuilder();
-        for (EmbeddingMatch<TextSegment> match : matches.matches()) {
-            TextSegment segment = match.embedded();
-            contextBuilder.append(segment.text()).append("\n\n");
-        }
-
-        String context = contextBuilder.toString();
+        String context = relevantSegments.toString();
 
         // Создаем подсказку (prompt) с учетом контекста и вопроса
         String promptTemplate = "Answer the following question based on the provided context.\n\n"
@@ -85,6 +54,6 @@ public class Main {
 
         // Закрываем ресурсы моделей
         dialogModel.close();
-        embeddingModel.close();
+
     }
 }
