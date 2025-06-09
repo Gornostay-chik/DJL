@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class DocumentProcessor {
-    private final int chunkSize = 5000;
-    private final int chunkOverlap = 100;
+    private final int chunkSize = 500;
+    private final int chunkOverlap = 50;
     private final LocalONNXEmbeddingModel embeddingModel;
     private InMemoryEmbeddingStore<TextSegment> vectorStore;
 

@@ -1,15 +1,4 @@
-import dev.langchain4j.data.document.Document;
-import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
-import dev.langchain4j.data.document.parser.TextDocumentParser;
-import dev.langchain4j.data.document.splitter.DocumentByParagraphSplitter;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.data.embedding.Embedding;
-import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
-import dev.langchain4j.store.embedding.EmbeddingMatch;
-import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
-import dev.langchain4j.store.embedding.EmbeddingSearchResult;
-
-import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
@@ -26,7 +15,7 @@ public class Main {
         processor.processDocument(filePath);
 
         // Define a query
-        String query = "What is the main mystery in the story?";
+        String query = "Who is Holmes?";
 
         // Take 3 relevant segments for context
         List<TextSegment> relevantSegments = processor.retrieveRelevantContext(query, 3);
@@ -34,9 +23,12 @@ public class Main {
         String context = relevantSegments.toString();
 
         // Создаем подсказку (prompt) с учетом контекста и вопроса
-        String promptTemplate = "Answer the following question based on the provided context.\n\n"
+// Пример изменённого шаблона prompt-а:
+// Пример изменённого шаблона prompt-а:
+        String promptTemplate = "Answer the following question based solely on the provided context.\n\n"
                 + "Context:\n%s\n\n"
-                + "Question: %s";
+                + "Question: %s\n\n"
+                + "Final Answer:";
 
         String prompt = String.format(promptTemplate, context, query);
 
@@ -44,13 +36,37 @@ public class Main {
         System.out.println(prompt);
         System.out.println("\n---\n");
 
+// Создаем объект модели (у вас LocalGPT2ONNXModel)
         // Создаем объект диалоговой модели и генерируем ответ
-        String tfModelDir = "/home/acer/IdeaProjects/DJI/src/main/resources/GPT2";
-        LocalONNXDialogModel dialogModel = new LocalONNXDialogModel(tfModelDir);
+        //    String tfModelDir = "/home/acer/IdeaProjects/DJI/src/main/resources/Llama-32-1B";
+        //    LocalONNXLlamaModel dialogModel = new LocalONNXLlamaModel(tfModelDir);
 
-        String answer = dialogModel.chat(prompt);
+        String tfModelDir = "/home/acer/IdeaProjects/DJI/src/main/resources/GPT2";
+        LocalGPT2ONNXModel dialogModel = new LocalGPT2ONNXModel(tfModelDir);
+
+// Генерируем полный текст
+        String fullOutput = dialogModel.chat(prompt);
+
+// Постобработка: удаляем все, что до маркера "Final Answer:"
+        String answer;
+        int markerIndex = fullOutput.indexOf("Final Answer:");
+        if (markerIndex != -1) {
+            // берем часть после маркера
+            answer = fullOutput.substring(markerIndex + "Final Answer:".length()).trim();
+        } else {
+            // Если маркер не найден, можно использовать полный вывод или применить другую логику
+            answer = fullOutput.trim();
+        }
+
         System.out.println("Сгенерированный ответ:");
         System.out.println(answer);
+
+
+
+
+
+
+
 
         // Закрываем ресурсы моделей
         dialogModel.close();

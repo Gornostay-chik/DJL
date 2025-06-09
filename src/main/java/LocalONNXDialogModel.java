@@ -109,7 +109,8 @@ public class LocalONNXDialogModel {
                 .setTypes(String.class, String.class)
                 .optEngine("OnnxRuntime")
                 .optModelUrls(localModelUrl)
-                .optModelName("dialog_model.onnx")
+              //  .optModelName("dialog_model.onnx")
+                .optModelName("model.onnx")
                 .optTranslator(translator)
                 .build();
         model = criteria.loadModel();
