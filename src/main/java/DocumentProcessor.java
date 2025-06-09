@@ -84,9 +84,12 @@ public class DocumentProcessor {
 
     // TODO: Implement the method to clear the vector store
 
-    public void reset() {
+    public void resetStore() {
         this.vectorStore = null;
     }
 
+    public void closeModel() throws Exception {
+        this.embeddingModel.close();
+    }
 
 }

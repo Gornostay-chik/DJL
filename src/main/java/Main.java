@@ -54,6 +54,8 @@ public class Main {
 
         // Закрываем ресурсы моделей
         dialogModel.close();
+        processor.closeModel();
+        processor.resetStore();
 
     }
 }
