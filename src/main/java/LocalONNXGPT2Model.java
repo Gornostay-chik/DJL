@@ -27,7 +27,7 @@ import java.util.Random;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class LocalGPT2ONNXModel {
+public class LocalONNXGPT2Model {
 
     // Поля: модель, предиктор и наш Translator
     private ZooModel<List<Long>, List<Long>> model;
@@ -45,7 +45,7 @@ public class LocalGPT2ONNXModel {
      *                 Например, в ней должен быть файл модели (например, "model_quantized.onnx")
      *                 и файлы токенизатора (например, tokenizer.json).
      */
-    public LocalGPT2ONNXModel(String modelDir) throws Exception {
+    public LocalONNXGPT2Model(String modelDir) throws Exception {
         String localModelUrl = "file://" + modelDir;
         translator = new GPT2ONNXTranslator(modelDir);
         Criteria<List<Long>, List<Long>> criteria = Criteria.builder()
@@ -262,7 +262,7 @@ public class LocalGPT2ONNXModel {
             NDArray logits = list.get(0);
             long seqLength = logits.getShape().get(1);
             NDArray lastLogits = logits.get(0).get((int)(seqLength - 1));
-            int nextToken = sampleFromLogits(lastLogits, 0.5f, 0.9f);
+            int nextToken = sampleFromLogits(lastLogits, 0.3f, 0.9f);
             List<Long> result = new ArrayList<>();
             result.add((long) nextToken);
             return result;
