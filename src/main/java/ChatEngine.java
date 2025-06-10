@@ -10,12 +10,12 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 
 public class ChatEngine {
     private LocalONNXGPT2Model chatModel;
-  //  private LocalONNXLlamaModel chatModel;
+    //private LocalONNXLlamaModel chatModel;
     private String systemMessage;
     private List<ChatMessage> conversationHistory;
     private String promptTemplate;
     private String tfModelDirGPT2 = "/home/acer/IdeaProjects/DJI/src/main/resources/GPT2";
-   // private String tfModelDirLLama = "/home/acer/IdeaProjects/DJI/src/main/resources/Llama-32-1B";
+    private String tfModelDirLLama = "/home/acer/IdeaProjects/DJI/src/main/resources/Llama-32-1B";
     public ChatEngine() throws Exception {
         this.chatModel = new LocalONNXGPT2Model(tfModelDirGPT2);
        // this.chatModel = new LocalONNXLlamaModel(tfModelDirLLama);
@@ -68,5 +68,10 @@ public class ChatEngine {
         return responseContent;
     }
 
+    public void resetConversation() {
+        // Reset the conversation history
+        this.conversationHistory.clear();
+        this.conversationHistory.add(new SystemMessage(systemMessage));
+    }
 
 }

@@ -120,7 +120,7 @@ public class LocalONNXLlamaModel {
         promptBuilder.append("Assistant:");
 
         // 2) Генерируем
-        String rawOutput = generate(promptBuilder.toString(), /*maxNewTokens*/50);
+        String rawOutput = generate(promptBuilder.toString(), /*maxNewTokens*/100);
 
         // 3) “Чистим” – вырезаем обратно промт (если модель его повторила),
         //    оставляем только сгенерированный ассистентом текст
@@ -277,7 +277,7 @@ public class LocalONNXLlamaModel {
             long seqLength = logits.getShape().get(1);
             NDArray lastLogits = logits.get(0).get((int) (seqLength - 1));
             // Задаем температуру 0.5 и topP 0.9
-            int nextToken = sampleFromLogits(lastLogits, 0.4f, 0.5f);
+            int nextToken = sampleFromLogits(lastLogits, 0.3f, 0.9f);
             List<Long> result = new ArrayList<>();
             result.add((long) nextToken);
             return result;

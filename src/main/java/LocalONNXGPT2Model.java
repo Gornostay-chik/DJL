@@ -262,7 +262,7 @@ public class LocalONNXGPT2Model {
             NDArray logits = list.get(0);
             long seqLength = logits.getShape().get(1);
             NDArray lastLogits = logits.get(0).get((int)(seqLength - 1));
-            int nextToken = sampleFromLogits(lastLogits, 0.3f, 0.9f);
+            int nextToken = sampleFromLogits(lastLogits, 0.2f, 0.9f);
             List<Long> result = new ArrayList<>();
             result.add((long) nextToken);
             return result;

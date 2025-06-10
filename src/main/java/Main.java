@@ -19,7 +19,7 @@ public class Main {
         String query = "Who is Holmes?";
 
         // Take 3 relevant segments for context
-        List<TextSegment> relevantSegments = processor.retrieveRelevantContext(query, 3);
+        List<TextSegment> relevantSegments = processor.retrieveRelevantContext(query, 5);
 
         StringBuilder sb = new StringBuilder();
         relevantSegments.forEach(rs -> sb.append(rs.text()).append("\n"));
@@ -35,6 +35,8 @@ public class Main {
 
         // Закрываем ресурсы моделей
      //   dialogModel.close();
+        chatEngine.resetConversation();
+
         processor.closeModel();
         processor.resetStore();
 
