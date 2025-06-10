@@ -1,5 +1,5 @@
-import ai.djl.huggingface.tokenizers.HuggingFaceTokenizer;
 import ai.djl.huggingface.tokenizers.Encoding;
+import ai.djl.huggingface.tokenizers.HuggingFaceTokenizer;
 import ai.djl.inference.Predictor;
 import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDList;
@@ -7,19 +7,68 @@ import ai.djl.ndarray.NDManager;
 import ai.djl.repository.zoo.Criteria;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.translate.Batchifier;
+import ai.djl.translate.TranslateException;
 import ai.djl.translate.Translator;
 import ai.djl.translate.TranslatorContext;
-import ai.djl.translate.TranslateException;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
+
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 public class LocalONNXEmbeddingModel {
 
-    private ZooModel<String, float[]> model;
-    private Predictor<String, float[]> predictor;
+    private final ZooModel<String, float[]> model;
+    private final Predictor<String, float[]> predictor;
+
+    /**
+     * Конструктор принимает путь к директории, где лежит ONNX-модель и файлы токенизатора.
+     * Файл модели должен называться "allMiniLML6v2.onnx".
+     *
+     * @param modelDir абсолютный путь к директории с моделью и токенизатором.
+     * @throws Exception если происходит ошибка загрузки модели.
+     */
+    public LocalONNXEmbeddingModel(String modelDir) throws Exception {
+        String localModelUrl = "file://" + modelDir;
+        Translator<String, float[]> translator = new ONNXTranslator(modelDir);
+        Criteria<String, float[]> criteria = Criteria.builder()
+                .setTypes(String.class, float[].class)
+                .optEngine("OnnxRuntime")
+                .optModelUrls(localModelUrl)
+                .optModelName("model.onnx")  // Проверяем, что именно этот файл присутствует
+                .optTranslator(translator)
+                .build();
+        model = criteria.loadModel();
+        predictor = model.newPredictor();
+    }
+
+    public Embedding embed(String text) {
+        float[] vector;
+        try {
+            vector = predictor.predict(text);
+        } catch (TranslateException e) {
+            throw new RuntimeException("Ошибка при предсказании эмбеддинга", e);
+        }
+        return new Embedding(vector);
+    }
+
+    public List<Embedding> embedAll(List<TextSegment> segments) {
+        List<Embedding> embeddings = new ArrayList<>();
+        for (TextSegment segment : segments) {
+            embeddings.add(embed(segment.text()));
+        }
+        return embeddings;
+    }
+
+    public void close() throws Exception {
+        if (predictor != null) {
+            predictor.close();
+        }
+        if (model != null) {
+            model.close();
+        }
+    }
 
     /**
      * Переводчик для ONNX-модели, который формирует входы:
@@ -75,54 +124,6 @@ public class LocalONNXEmbeddingModel {
         @Override
         public Batchifier getBatchifier() {
             return Batchifier.STACK;
-        }
-    }
-
-    /**
-     * Конструктор принимает путь к директории, где лежит ONNX-модель и файлы токенизатора.
-     * Файл модели должен называться "allMiniLML6v2.onnx".
-     *
-     * @param modelDir абсолютный путь к директории с моделью и токенизатором.
-     * @throws Exception если происходит ошибка загрузки модели.
-     */
-    public LocalONNXEmbeddingModel(String modelDir) throws Exception {
-        String localModelUrl = "file://" + modelDir;
-        Translator<String, float[]> translator = new ONNXTranslator(modelDir);
-        Criteria<String, float[]> criteria = Criteria.builder()
-                .setTypes(String.class, float[].class)
-                .optEngine("OnnxRuntime")
-                .optModelUrls(localModelUrl)
-                .optModelName("model.onnx")  // Проверяем, что именно этот файл присутствует
-                .optTranslator(translator)
-                .build();
-        model = criteria.loadModel();
-        predictor = model.newPredictor();
-    }
-
-    public Embedding embed(String text) {
-        float[] vector;
-        try {
-            vector = predictor.predict(text);
-        } catch (TranslateException e) {
-            throw new RuntimeException("Ошибка при предсказании эмбеддинга", e);
-        }
-        return new Embedding(vector);
-    }
-
-    public List<Embedding> embedAll(List<TextSegment> segments) {
-        List<Embedding> embeddings = new ArrayList<>();
-        for (TextSegment segment : segments) {
-            embeddings.add(embed(segment.text()));
-        }
-        return embeddings;
-    }
-
-    public void close() throws Exception {
-        if (predictor != null) {
-            predictor.close();
-        }
-        if (model != null) {
-            model.close();
         }
     }
 }

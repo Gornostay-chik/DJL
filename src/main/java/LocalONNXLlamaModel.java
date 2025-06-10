@@ -1,19 +1,19 @@
 import ai.djl.Model;
-import ai.djl.huggingface.tokenizers.HuggingFaceTokenizer;
 import ai.djl.huggingface.tokenizers.Encoding;
+import ai.djl.huggingface.tokenizers.HuggingFaceTokenizer;
 import ai.djl.inference.Predictor;
+import ai.djl.metric.Metrics;
 import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDList;
 import ai.djl.ndarray.NDManager;
 import ai.djl.ndarray.types.Shape;
+import ai.djl.nn.Block;
 import ai.djl.repository.zoo.Criteria;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.translate.Batchifier;
+import ai.djl.translate.TranslateException;
 import ai.djl.translate.Translator;
 import ai.djl.translate.TranslatorContext;
-import ai.djl.translate.TranslateException;
-import ai.djl.metric.Metrics;
-import ai.djl.nn.Block;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -21,22 +21,17 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.response.ChatResponse;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 
 public class LocalONNXLlamaModel {
-
-    // Поля модели и предиктора
-    private ZooModel<List<Long>, List<Long>> model;
-    private Predictor<List<Long>, List<Long>> predictor;
-    private ONNXLlamaTranslator translator;
 
     // Пример специальных токенов: BOS и EOS (настройте по необходимости)
     private static final long BOS_ID = 1;
     private static final long EOS_ID = 2;
+    // Поля модели и предиктора
+    private final ZooModel<List<Long>, List<Long>> model;
+    private final Predictor<List<Long>, List<Long>> predictor;
+    private final ONNXLlamaTranslator translator;
 
     /**
      * Конструктор. modelDir — директория, содержащая ONNX-модель и файлы токенизатора.
@@ -45,7 +40,7 @@ public class LocalONNXLlamaModel {
         String localModelUrl = "file://" + modelDir;
         translator = new ONNXLlamaTranslator(modelDir);
         Criteria<List<Long>, List<Long>> criteria = Criteria.builder()
-                .setTypes((Class<List<Long>>)(Class<?>) List.class, (Class<List<Long>>)(Class<?>) List.class)
+                .setTypes((Class<List<Long>>) (Class<?>) List.class, (Class<List<Long>>) (Class<?>) List.class)
                 .optEngine("OnnxRuntime")
                 .optModelUrls(localModelUrl)
                 .optModelName("model_quantized.onnx")
@@ -104,13 +99,11 @@ public class LocalONNXLlamaModel {
                 //              .append(msg.text())
                 //              .append("\n");
                 continue;
-            }
-            else if (msg instanceof UserMessage) {
+            } else if (msg instanceof UserMessage) {
                 promptBuilder.append("User: ")
                         .append(((UserMessage) msg).contents())
                         .append("\n");
-            }
-            else if (msg instanceof AiMessage) {
+            } else if (msg instanceof AiMessage) {
                 promptBuilder.append("Assistant: ")
                         .append(((AiMessage) msg).text())
                         .append("\n");
@@ -160,7 +153,7 @@ public class LocalONNXLlamaModel {
      */
     private static class SimpleTranslatorContext implements TranslatorContext {
 
-        private NDManager manager;
+        private final NDManager manager;
 
         public SimpleTranslatorContext(NDManager manager) {
             this.manager = manager;

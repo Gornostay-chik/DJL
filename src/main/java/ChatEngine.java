@@ -1,24 +1,26 @@
 import ai.djl.translate.TranslateException;
 import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.SystemMessage;
-import java.util.ArrayList;
-import java.util.List;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.response.ChatResponse;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class ChatEngine {
-    private LocalONNXGPT2Model chatModel;
+    private final LocalONNXGPT2Model chatModel;
     //private LocalONNXLlamaModel chatModel;
-    private String systemMessage;
-    private List<ChatMessage> conversationHistory;
-    private String promptTemplate;
-    private String tfModelDirGPT2 = "/home/acer/IdeaProjects/DJI/src/main/resources/GPT2";
-    private String tfModelDirLLama = "/home/acer/IdeaProjects/DJI/src/main/resources/Llama-32-1B";
+    private final String systemMessage;
+    private final List<ChatMessage> conversationHistory;
+    private final String promptTemplate;
+    private final String tfModelDirGPT2 = "/home/acer/IdeaProjects/DJI/src/main/resources/GPT2";
+    private final String tfModelDirLLama = "/home/acer/IdeaProjects/DJI/src/main/resources/Llama-32-1B";
+
     public ChatEngine() throws Exception {
         this.chatModel = new LocalONNXGPT2Model(tfModelDirGPT2);
-       // this.chatModel = new LocalONNXLlamaModel(tfModelDirLLama);
+        // this.chatModel = new LocalONNXLlamaModel(tfModelDirLLama);
         this.systemMessage =
                 "You are a helpful assistant that ONLY answers questions based on the "
                         + "provided context. If no relevant context is provided, politely inform "
@@ -56,7 +58,7 @@ public class ChatEngine {
     public String sendMessage(String userMessage, String context) throws TranslateException {
 
         // Format the message using the prompt template
-        String promt = formatMessage(context,userMessage);
+        String promt = formatMessage(context, userMessage);
         // Add the current message to the conversation history
         this.conversationHistory.add(new UserMessage(promt));
         // Get the response from the model

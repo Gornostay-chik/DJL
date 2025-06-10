@@ -2,14 +2,15 @@ import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
 import dev.langchain4j.data.document.parser.TextDocumentParser;
 import dev.langchain4j.data.document.splitter.DocumentByParagraphSplitter;
-import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.data.embedding.Embedding;
-import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
+import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingSearchResult;
-import java.util.List;
+import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class DocumentProcessor {
     private final int chunkSize = 150;
@@ -47,6 +48,7 @@ public class DocumentProcessor {
             embeddings.add(emb);
         }
 
+
         // Create or update the vector store
         if (vectorStore == null) {
             vectorStore = new InMemoryEmbeddingStore<>();
@@ -82,7 +84,7 @@ public class DocumentProcessor {
         return relevantSegments;
     }
 
-    // TODO: Implement the method to clear the vector store
+    // method to clear the vector store
 
     public void resetStore() {
         this.vectorStore = null;

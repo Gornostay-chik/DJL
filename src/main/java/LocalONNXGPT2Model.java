@@ -1,46 +1,41 @@
 import ai.djl.Model;
-import ai.djl.huggingface.tokenizers.HuggingFaceTokenizer;
 import ai.djl.huggingface.tokenizers.Encoding;
+import ai.djl.huggingface.tokenizers.HuggingFaceTokenizer;
 import ai.djl.inference.Predictor;
+import ai.djl.metric.Metrics;
 import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDList;
 import ai.djl.ndarray.NDManager;
+import ai.djl.nn.Block;
 import ai.djl.repository.zoo.Criteria;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.translate.Batchifier;
+import ai.djl.translate.TranslateException;
 import ai.djl.translate.Translator;
 import ai.djl.translate.TranslatorContext;
-import ai.djl.translate.TranslateException;
-import ai.djl.metric.Metrics;
-import ai.djl.nn.Block;
-
-import dev.langchain4j.model.chat.response.ChatResponse;
-import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.chat.response.ChatResponse;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 
 public class LocalONNXGPT2Model {
-
-    // Поля: модель, предиктор и наш Translator
-    private ZooModel<List<Long>, List<Long>> model;
-    private Predictor<List<Long>, List<Long>> predictor;
-    private GPT2ONNXTranslator translator;
 
     // Для GPT‑2 обычно используется один и тот же токен для завершения генерации.
     // В оригинальной GPT‑2 eos_token_id = 50256.
     private static final long BOS_ID = 50256;
     private static final long EOS_ID = 50256;
+    // Поля: модель, предиктор и наш Translator
+    private final ZooModel<List<Long>, List<Long>> model;
+    private final Predictor<List<Long>, List<Long>> predictor;
+    private final GPT2ONNXTranslator translator;
 
     /**
      * Конструктор.
+     *
      * @param modelDir Директория, где находятся ONNX‑модель и файлы токенизатора.
      *                 Например, в ней должен быть файл модели (например, "model_quantized.onnx")
      *                 и файлы токенизатора (например, tokenizer.json).
@@ -49,7 +44,7 @@ public class LocalONNXGPT2Model {
         String localModelUrl = "file://" + modelDir;
         translator = new GPT2ONNXTranslator(modelDir);
         Criteria<List<Long>, List<Long>> criteria = Criteria.builder()
-                .setTypes((Class<List<Long>>)(Class<?>)List.class, (Class<List<Long>>)(Class<?>)List.class)
+                .setTypes((Class<List<Long>>) (Class<?>) List.class, (Class<List<Long>>) (Class<?>) List.class)
                 .optEngine("OnnxRuntime")
                 .optModelUrls(localModelUrl)
                 // Имя файла модели – при необходимости замените на актуальное (например, "model_quantized.onnx")
@@ -115,13 +110,11 @@ public class LocalONNXGPT2Model {
                 //              .append(msg.text())
                 //              .append("\n");
                 continue;
-            }
-            else if (msg instanceof UserMessage) {
+            } else if (msg instanceof UserMessage) {
                 promptBuilder.append("User: ")
                         .append(((UserMessage) msg).contents())
                         .append("\n");
-            }
-            else if (msg instanceof AiMessage) {
+            } else if (msg instanceof AiMessage) {
                 promptBuilder.append("Assistant: ")
                         .append(((AiMessage) msg).text())
                         .append("\n");
@@ -164,7 +157,7 @@ public class LocalONNXGPT2Model {
      */
     private static class SimpleTranslatorContext implements TranslatorContext {
 
-        private NDManager manager;
+        private final NDManager manager;
 
         public SimpleTranslatorContext(NDManager manager) {
             this.manager = manager;
@@ -222,6 +215,7 @@ public class LocalONNXGPT2Model {
 
         /**
          * Конструктор.
+         *
          * @param tokenizerDir Путь к файлам токенизатора.
          * @throws Exception при ошибках загрузки токенизатора.
          */
@@ -261,7 +255,7 @@ public class LocalONNXGPT2Model {
             // logits имеет форму [1, seq_length, vocab_size]
             NDArray logits = list.get(0);
             long seqLength = logits.getShape().get(1);
-            NDArray lastLogits = logits.get(0).get((int)(seqLength - 1));
+            NDArray lastLogits = logits.get(0).get((int) (seqLength - 1));
             int nextToken = sampleFromLogits(lastLogits, 0.2f, 0.9f);
             List<Long> result = new ArrayList<>();
             result.add((long) nextToken);
