@@ -14,6 +14,11 @@ import ai.djl.translate.TranslatorContext;
 import ai.djl.translate.TranslateException;
 import ai.djl.metric.Metrics;
 import ai.djl.nn.Block;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.chat.response.ChatResponse;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -88,11 +93,54 @@ public class LocalONNXLlamaModel {
         return result;
     }
 
+    public ChatResponse chat(List<ChatMessage> history) throws TranslateException {
+        // 1) Собираем текст промпта из истории
+        StringBuilder promptBuilder = new StringBuilder();
+        for (ChatMessage msg : history) {
+            if (msg instanceof SystemMessage) {
+                // системные месседжи можно не включать в генерируемый текст,
+                // а держать отдельно, если чат-подсистема их подтягивает сама.
+                // promptBuilder.append("[System] ")
+                //              .append(msg.text())
+                //              .append("\n");
+                continue;
+            }
+            else if (msg instanceof UserMessage) {
+                promptBuilder.append("User: ")
+                        .append(((UserMessage) msg).contents())
+                        .append("\n");
+            }
+            else if (msg instanceof AiMessage) {
+                promptBuilder.append("Assistant: ")
+                        .append(((AiMessage) msg).text())
+                        .append("\n");
+            }
+        }
+        // Сигнализируем модели, что дальше пойдёт ответ ассистента
+        promptBuilder.append("Assistant:");
+
+        // 2) Генерируем
+        String rawOutput = generate(promptBuilder.toString(), /*maxNewTokens*/50);
+
+        // 3) “Чистим” – вырезаем обратно промт (если модель его повторила),
+        //    оставляем только сгенерированный ассистентом текст
+        String answer = rawOutput
+                .substring(rawOutput.indexOf("Assistant:") + "Assistant:".length())
+                .trim();
+
+        // 4) Упаковываем в ChatResponse (пример, API билдера может отличаться)
+        return ChatResponse.builder()
+                .aiMessage(new AiMessage(answer))
+                // если нужен full history, то можно передать и его:
+                //.conversationHistory(updatedHistory)
+                .build();
+    }
+
     /**
      * Обёртка для generate с фиксированным числом генерируемых токенов (например, 50).
      */
     public String chat(String prompt) throws TranslateException {
-        return generate(prompt, 1500);
+        return generate(prompt, 50);
     }
 
     /**

@@ -5,7 +5,6 @@ import ai.djl.inference.Predictor;
 import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDList;
 import ai.djl.ndarray.NDManager;
-import ai.djl.ndarray.types.Shape;
 import ai.djl.repository.zoo.Criteria;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.translate.Batchifier;
@@ -14,6 +13,12 @@ import ai.djl.translate.TranslatorContext;
 import ai.djl.translate.TranslateException;
 import ai.djl.metric.Metrics;
 import ai.djl.nn.Block;
+
+import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.data.message.SystemMessage;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -96,7 +101,50 @@ public class LocalGPT2ONNXModel {
      * Метод chat – обёртка для generate с фиксированным числом генерируемых токенов (например, 50).
      */
     public String chat(String prompt) throws TranslateException {
-        return generate(prompt, 500);
+        return generate(prompt, 50);
+    }
+
+    public ChatResponse chat(List<ChatMessage> history) throws TranslateException {
+        // 1) Собираем текст промпта из истории
+        StringBuilder promptBuilder = new StringBuilder();
+        for (ChatMessage msg : history) {
+            if (msg instanceof SystemMessage) {
+                // системные месседжи можно не включать в генерируемый текст,
+                // а держать отдельно, если чат-подсистема их подтягивает сама.
+                // promptBuilder.append("[System] ")
+                //              .append(msg.text())
+                //              .append("\n");
+                continue;
+            }
+            else if (msg instanceof UserMessage) {
+                promptBuilder.append("User: ")
+                        .append(((UserMessage) msg).contents())
+                        .append("\n");
+            }
+            else if (msg instanceof AiMessage) {
+                promptBuilder.append("Assistant: ")
+                        .append(((AiMessage) msg).text())
+                        .append("\n");
+            }
+        }
+        // Сигнализируем модели, что дальше пойдёт ответ ассистента
+        promptBuilder.append("Assistant:");
+
+        // 2) Генерируем
+        String rawOutput = generate(promptBuilder.toString(), /*maxNewTokens*/50);
+
+        // 3) “Чистим” – вырезаем обратно промт (если модель его повторила),
+        //    оставляем только сгенерированный ассистентом текст
+        String answer = rawOutput
+                .substring(rawOutput.indexOf("Assistant:") + "Assistant:".length())
+                .trim();
+
+        // 4) Упаковываем в ChatResponse (пример, API билдера может отличаться)
+        return ChatResponse.builder()
+                .aiMessage(new AiMessage(answer))
+                // если нужен full history, то можно передать и его:
+                //.conversationHistory(updatedHistory)
+                .build();
     }
 
     /**
