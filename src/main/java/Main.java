@@ -14,7 +14,7 @@ public class Main {
         }
 
         // Send a message about the document
-        String query = "Who is Blue?";
+        String query = "Who is sea girl?";
         String response = chatbot.sendMessage(query);
         System.out.println("\nQuestion: " + query);
         System.out.println("Answer: " + response);

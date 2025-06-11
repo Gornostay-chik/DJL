@@ -118,7 +118,7 @@ public class LocalONNXSmolLM2Model {
         }
         promptBuilder.append("Assistant:");
 
-        String rawOutput = generate(promptBuilder.toString(), 50);
+        String rawOutput = generate(promptBuilder.toString(), 90);
         String answer = rawOutput.substring(rawOutput.indexOf("Assistant:") + "Assistant:".length()).trim();
 
         return ChatResponse.builder()

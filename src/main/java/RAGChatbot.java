@@ -33,12 +33,12 @@ public class RAGChatbot {
         for (TextSegment segment : relevantSegments) {
             // Extract the content of the segment
             String content = segment.text();
-          //  Matcher m = Pattern.compile("file_name=([^,}]+)").matcher(String.valueOf(segment.metadata()));
-          //  m.find();
+            Matcher m = Pattern.compile("file_name=([^,}]+)").matcher(String.valueOf(segment.metadata()));
+            m.find();
            // System.out.println(" fileName: {" + m.group(1) + "}");
             // Append the content to the context string
-          //  context.append("content : {" + content + " fileName: {" + m.group(1) + "}").append("\n\n");
-            context.append(content).append("\n\n");
+            context.append("content : {" + content + " fileName: {" + m.group(1) + "}").append("\n\n");
+          //  context.append(content).append("\n\n");
 
         }
 

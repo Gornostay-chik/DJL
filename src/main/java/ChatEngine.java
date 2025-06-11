@@ -25,10 +25,12 @@ public class ChatEngine {
         // this.chatModel = new LocalONNXLlamaModel(tfModelDirLLama);
         this.chatModel = new LocalONNXSmolLM2Model(tfModelDirSmoILM);
         this.systemMessage =
-                "You are a helpful assistant that ONLY answers questions based on the "
+               "You are a helpful assistant that ONLY answers questions based on the "
                         + "provided context. If no relevant context is provided, politely inform "
                         + "the user that you don't have the necessary information to answer their "
                         + "question accurately.";
+
+
 
         // Initialize conversation history with system message
         this.conversationHistory = new ArrayList<>();
@@ -37,7 +39,7 @@ public class ChatEngine {
         // Define the prompt template that instructs the model to answer questions
         // based only on the provided context, with placeholders for context and question
 
-        this.promptTemplate = "Based on the above context, provide a concise and direct answer in one sentence. Use this template. Only output the answer without any additional text.\n" +
+        this.promptTemplate = "Based on the above context, provide a concise and direct answer in one sentence.\n" +
                 "Context:\n" +
                 "%s\n" +
                 "\n" +
