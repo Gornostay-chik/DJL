@@ -10,17 +10,20 @@ import java.util.List;
 
 
 public class ChatEngine {
-    private final LocalONNXGPT2Model chatModel;
+    // private final LocalONNXGPT2Model chatModel;
     //private LocalONNXLlamaModel chatModel;
+    private final LocalONNXSmolLM2Model chatModel;
     private final String systemMessage;
     private final List<ChatMessage> conversationHistory;
     private final String promptTemplate;
     private final String tfModelDirGPT2 = "/home/acer/IdeaProjects/DJI/src/main/resources/GPT2";
     private final String tfModelDirLLama = "/home/acer/IdeaProjects/DJI/src/main/resources/Llama-32-1B";
+    private final String tfModelDirSmoILM = "/home/acer/IdeaProjects/DJI/src/main/resources/SmolLM2-135M-Instruct";
 
     public ChatEngine() throws Exception {
-        this.chatModel = new LocalONNXGPT2Model(tfModelDirGPT2);
+        // this.chatModel = new LocalONNXGPT2Model(tfModelDirGPT2);
         // this.chatModel = new LocalONNXLlamaModel(tfModelDirLLama);
+        this.chatModel = new LocalONNXSmolLM2Model(tfModelDirSmoILM);
         this.systemMessage =
                 "You are a helpful assistant that ONLY answers questions based on the "
                         + "provided context. If no relevant context is provided, politely inform "
@@ -34,7 +37,7 @@ public class ChatEngine {
         // Define the prompt template that instructs the model to answer questions
         // based only on the provided context, with placeholders for context and question
 
-        this.promptTemplate = "Based on the above context, provide a concise and direct answer in one sentence. Only output the answer without any additional text.\n" +
+        this.promptTemplate = "Based on the above context, provide a concise and direct answer in one sentence. Use this template. Only output the answer without any additional text.\n" +
                 "Context:\n" +
                 "%s\n" +
                 "\n" +
